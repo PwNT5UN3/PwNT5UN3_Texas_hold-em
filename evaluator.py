@@ -2,15 +2,10 @@
 
 from __future__ import annotations
 
-from collections import Counter
 from dataclasses import dataclass
 from enum import IntEnum
-from itertools import combinations
 
-from cards import Card, Rank, Suit, Deck
-
-#debug
-from random import random
+from cards import Card, Rank, Suit
 
 
 class HandCategory(IntEnum):
@@ -58,7 +53,6 @@ class HandEvaluator:
                                occ.items())), reverse=True)[0]
 
     def _rank_seven(self, cards: list[Card]) -> HandRank:
-        ranks = list(map(lambda x: x.rank.value, cards))
         suits = list(map(lambda x: x.suit, cards))
         is_flush = self._check_flush(suits) + 1
         straight_ranks = self._straight_high(cards)
@@ -68,7 +62,6 @@ class HandEvaluator:
                 self._check_straight_flush(cards, Suit(is_flush - 1))
         rank_counts = self._get_grouped(cards)
         best_group = self._get_best_group_hand(rank_counts)
-        print(list(map(lambda x: str(x), cards)))
         if straight_flush_ranks and Rank(straight_flush_ranks[0]) == Rank.ACE:
             return HandRank(HandCategory.ROYAL_FLUSH, straight_flush_ranks)
         elif straight_flush_ranks:
@@ -102,7 +95,6 @@ class HandEvaluator:
             return HandRank(HandCategory.HIGH,
                             sorted(list(map(lambda x: x.rank.value, cards)),
                                    reverse=True)[:5])
-        print(rank_counts)
         return HandRank(HandCategory.HIGH, [2])
 
     def _check_straight_flush(self, cards: list[Card],
@@ -114,7 +106,6 @@ class HandEvaluator:
                              groups: dict[Rank, int]) -> HandCategory | None:
         groups_int = sorted(list(i for i in groups.values() if i != 1),
                             reverse=True)
-        print(groups_int)
         if 4 in groups_int:
             return HandCategory.FOUR_OF_A_KIND
         elif (3 in groups_int and 2 in groups_int) or groups_int.count(3) >= 2:
@@ -157,7 +148,7 @@ class HandEvaluator:
                               size: int, fh: bool, tp: bool) -> [int]:
         ranks = sorted(list(map(lambda x: x.rank.value, cards)), reverse=True)
         rank_counts_list = sorted(rank_counts.items(), key=lambda x: x[1],
-                                      reverse=True)
+                                  reverse=True)
         order = []
         if fh and tp:
             raise Exception("something unexpected happened")
@@ -177,7 +168,6 @@ class HandEvaluator:
                             rank_counts_list[0][0].value]
             else:
                 if [i[1] for i in rank_counts_list].count(2) == 2:
-                    print("EXPECTED FOR 322")
                     if rank_counts_list[1][0].value > rank_counts_list[2][0]:
                         return [rank_counts_list[0][0].value,
                                 rank_counts_list[0][0].value,
@@ -228,7 +218,6 @@ class HandEvaluator:
                 order.append([i for i in ranks if i not in order][0])
         else:
             order.extend([i for i in ranks if i == rank_counts_list[0][0]])
-            print("nonspecial group", size, order)
             order.extend([i for i in ranks if i not in order][:5-size])
         return order
 
