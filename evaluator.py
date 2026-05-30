@@ -198,84 +198,42 @@ class HandEvaluator:
                             rank_counts_list[1][0].value]
         elif tp:
             if [i[1] for i in rank_counts_list].count(2) == 3:
-                pass
+                if (rank_counts_list[0][0].value < rank_counts_list[1][0]
+                        and rank_counts_list[0][0].value <
+                        rank_counts_list[2][0]):
+                    order.extend([rank_counts_list[1][0].value,
+                                  rank_counts_list[1][0].value,
+                                  rank_counts_list[2][0].value,
+                                  rank_counts_list[2][0].value])
+                elif (rank_counts_list[1][0].value < rank_counts_list[0][0]
+                        and rank_counts_list[1][0].value <
+                        rank_counts_list[2][0]):
+                    order.extend([rank_counts_list[0][0].value,
+                                  rank_counts_list[0][0].value,
+                                  rank_counts_list[2][0].value,
+                                  rank_counts_list[2][0].value])
+                else:
+                    order.extend([rank_counts_list[0][0].value,
+                                  rank_counts_list[0][0].value,
+                                  rank_counts_list[1][0].value,
+                                  rank_counts_list[1][0].value])
+                order.sort(reverse=True)
+                order.append([i for i in ranks if i not in order][0])
             else:
-                pass
+                order.extend([rank_counts_list[0][0].value,
+                              rank_counts_list[0][0].value,
+                              rank_counts_list[1][0].value,
+                              rank_counts_list[1][0].value])
+                order.sort(reverse=True)
+                order.append([i for i in ranks if i not in order][0])
         else:
-            pass
-        return ranks[:5]
+            order.extend([i for i in ranks if i == rank_counts_list[0][0]])
+            print("nonspecial group", size, order)
+            order.extend([i for i in ranks if i not in order][:5-size])
+        return order
 
     def _get_best_flush_cards(self, cards: list[Card], suit: Suit) -> [int]:
         ranks = sorted(list(map(lambda x: x.rank.value,
                                 [i for i in cards if i.suit == suit])),
                        reverse=True)
         return ranks[:5]
-
-
-if __name__ == '__main__':
-    eval = HandEvaluator()
-    deck = Deck()
-    print(eval.best_rank(deck.draw(7)))
-    print(eval.best_rank(sorted([
-                                Card(Rank.TWO, Suit.HEARTS),
-                                Card(Rank.TWO, Suit.DIAMONDS),
-                                Card(Rank.TWO, Suit.CLUBS),
-                                Card(Rank.QUEEN, Suit.HEARTS),
-                                Card(Rank.QUEEN, Suit.DIAMONDS),
-                                Card(Rank.QUEEN, Suit.CLUBS),
-                                Card(Rank.ACE, Suit.SPADES)
-                                ], key=lambda x: random())))
-    print(eval.best_rank(sorted([
-                                Card(Rank.JACK, Suit.HEARTS),
-                                Card(Rank.JACK, Suit.DIAMONDS),
-                                Card(Rank.JACK, Suit.CLUBS),
-                                Card(Rank.TEN, Suit.HEARTS),
-                                Card(Rank.TEN, Suit.DIAMONDS),
-                                Card(Rank.KING, Suit.HEARTS),
-                                Card(Rank.KING, Suit.CLUBS)
-                                ], key=lambda x: random())))
-    print(eval.best_rank(sorted([
-                                Card(Rank.EIGHT, Suit.HEARTS),
-                                Card(Rank.EIGHT, Suit.DIAMONDS),
-                                Card(Rank.EIGHT, Suit.CLUBS),
-                                Card(Rank.SEVEN, Suit.HEARTS),
-                                Card(Rank.SEVEN, Suit.DIAMONDS),
-                                Card(Rank.JACK, Suit.SPADES),
-                                Card(Rank.QUEEN, Suit.CLUBS)
-                                ], key=lambda x: random())))
-    print(eval.best_rank(sorted([
-                                Card(Rank.EIGHT, Suit.HEARTS),
-                                Card(Rank.NINE, Suit.HEARTS),
-                                Card(Rank.JACK, Suit.HEARTS),
-                                Card(Rank.FIVE, Suit.DIAMONDS),
-                                Card(Rank.SEVEN, Suit.HEARTS),
-                                Card(Rank.THREE, Suit.CLUBS),
-                                Card(Rank.TEN, Suit.HEARTS)
-                                ], key=lambda x: random())))
-    print(eval.best_rank(sorted([
-                                Card(Rank.THREE, Suit.CLUBS),
-                                Card(Rank.FIVE, Suit.CLUBS),
-                                Card(Rank.KING, Suit.HEARTS),
-                                Card(Rank.ACE, Suit.CLUBS),
-                                Card(Rank.FOUR, Suit.CLUBS),
-                                Card(Rank.NINE, Suit.SPADES),
-                                Card(Rank.TWO, Suit.CLUBS)
-                                ], key=lambda x: random())))
-    print(eval.best_rank(sorted([
-                                Card(Rank.NINE, Suit.HEARTS),
-                                Card(Rank.TWO, Suit.DIAMONDS),
-                                Card(Rank.SEVEN, Suit.SPADES),
-                                Card(Rank.EIGHT, Suit.CLUBS),
-                                Card(Rank.JACK, Suit.DIAMONDS),
-                                Card(Rank.TEN, Suit.HEARTS),
-                                Card(Rank.SIX, Suit.CLUBS)
-                                ], key=lambda x: random())))
-    print(eval.best_rank(sorted([
-                                Card(Rank.KING, Suit.HEARTS),
-                                Card(Rank.TWO, Suit.DIAMONDS),
-                                Card(Rank.FOUR, Suit.SPADES),
-                                Card(Rank.SEVEN, Suit.CLUBS),
-                                Card(Rank.ACE, Suit.DIAMONDS),
-                                Card(Rank.THREE, Suit.HEARTS),
-                                Card(Rank.FIVE, Suit.CLUBS)
-                                ], key=lambda x: random())))
