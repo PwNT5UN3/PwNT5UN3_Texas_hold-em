@@ -74,6 +74,9 @@ class Deck:
                 self._cards.append(Card(rank=rank, suit=suit))
         shuffle(self._cards)
 
+    def reset_deck(self) -> None:
+        self.__init__()
+
     def draw(self, count: int = 1) -> list[Card]:
         deal = []
         if count < 1:
