@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from cards import Card
+from cards import Card, Deck
 from player import Player
 import os
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "True"
 import pygame  # noqa: E402
-from time import sleep
 
 
 class GameManager:
@@ -159,12 +158,33 @@ class GameManager:
             pygame.event.pump()
 
     def setup(self):
+        self._players = []
         buy_in = self._settings.get("buy-in", 10000)
-        for p in range(self._settings.get("total_number_of_players", 5) - 1):
+        for p in range(self._settings.get("total_number_of_players", 5)):
             if p == 0:
                 self._players.append(Player(self._settings.get("name",
                                                                "Player"),
                                             buy_in, True))
+            else:
+                self._players.append(Player(f"Bot {p}", buy_in, False))
+        dealer_deck = Deck()
+        dealer_cards = []
+        for player in range(len(self._players)):
+            dealer_cards.append(dealer_deck.draw()[0].rank.value)
+        dealer_cards = sorted(list(enumerate(dealer_cards)),
+                              key=lambda x: x[1], reverse=True)
+        dealer_cards = list(filter(lambda x: x[1] == dealer_cards[0][1],
+                                   dealer_cards))
+        while len(dealer_cards) > 1:
+            dealer_deck = Deck()
+            for player in range(len(dealer_cards)):
+                dealer_cards[player] = (dealer_cards[player][0],
+                                        dealer_deck.draw()[0].rank.value)
+            dealer_cards = sorted(list(dealer_cards),
+                                  key=lambda x: x[1], reverse=True)
+            dealer_cards = list(filter(lambda x: x[1] == dealer_cards[0][1],
+                                       dealer_cards))
+        self._dealer_position = dealer_cards[0][0]
 
     def play(self):
         self.setup()
