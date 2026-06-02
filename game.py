@@ -186,11 +186,25 @@ class GameManager:
         self._dealer_position = (dealer_cards[0][0] + len(self._players) - 1)\
             % len(self._players)
 
-    def betting_round(self, active: int, bidder: int, cc: int) -> bool:
+    def betting_round(self, info: list[int]) -> bool:
+        active, bidder, cc = info
         while cc < active:
+            print(cc, active, bidder, self._dealer_position)
             if self._players[bidder].folded:
                 cc += 1
-            # elif self._players
+            elif self._players[bidder].is_human:
+                return False
+            else:
+                result = self._players[bidder].bot_action([], 0)
+                match result:
+                    case "C":
+                        cc += 1
+                    case "R":
+                        cc = 1
+                    case "F":
+                        cc += 1
+            bidder = (bidder + 1) % len(self._players)
+        return True
 
 
     def play(self):
@@ -206,8 +220,14 @@ class GameManager:
         communal_cards = []
         bidder = -1
         active = len(self._players)
+        player_turn = False
         while self.running:
             if current_state == 0:
+                player_turn = False
+                fist_betting_round = True
+                print("new hand")
+                betting_pool = 0
+                current_bet = 0
                 active = len(self._players)
                 for p in self._players:
                     p.reset_for_hand()
@@ -225,7 +245,7 @@ class GameManager:
                     betting_pool += bet
                     current_bet = bet
                     self._players[(self._dealer_position + 2)
-                                % len(self._players)].bet(current_big)
+                                  % len(self._players)].bet(current_big)
                     betting_pool += bet
                     current_bet = bet
                 else:
@@ -244,49 +264,79 @@ class GameManager:
                     play_deck.draw(1)
                 current_state += 1
             elif current_state == 1:
-                if active > 2:
-                    bidder = (self._dealer_position + 3) % len(self._players)
-                else:
-                    bidder = self._dealer_position
-                cc = 0
-                if self.betting_round(active, bidder, cc):
-                    current_state += 1
+                if fist_betting_round:
+                    current_bet = 0
+                    if active > 2:
+                        bidder = (self._dealer_position + 3) % len(self._players)
+                    else:
+                        bidder = self._dealer_position
+                    cc = 0
+                    fist_betting_round = False
+                info = [active, bidder, cc]
+                if not player_turn:
+                    if self.betting_round(info):
+                        current_state += 1
+                    else:
+                        player_turn = True
+                active, bidder, cc = info
             elif current_state == 2:
+                current_bet = 0
                 if len(communal_cards) != 3:
                     play_deck.draw(3)
                     communal_cards.extend(play_deck.draw(3))
-                if active > 2:
-                    bidder = (self._dealer_position + 3) % len(self._players)
-                else:
-                    bidder = self._dealer_position
-                cc = 0
-                if self.betting_round(active, bidder, cc):
-                    current_state += 1
+                    if active > 2:
+                        bidder = (self._dealer_position + 3) % len(self._players)
+                    else:
+                        bidder = self._dealer_position
+                    cc = 0
+                info = [active, bidder, cc]
+                if not player_turn:
+                    if self.betting_round(info):
+                        current_state += 1
+                    else:
+                        player_turn = True
+                active, bidder, cc = info
             elif current_state == 3:
+                current_bet = 0
                 if len(communal_cards) != 4:
                     play_deck.draw(1)
                     communal_cards.extend(play_deck.draw(1))
-                if active > 2:
-                    bidder = (self._dealer_position + 3) % len(self._players)
-                else:
-                    bidder = self._dealer_position
-                cc = 0
-                if self.betting_round(active, bidder, cc):
-                    current_state += 1
+                    if active > 2:
+                        bidder = (self._dealer_position + 3) % len(self._players)
+                    else:
+                        bidder = self._dealer_position
+                    cc = 0
+                info = [active, bidder, cc]
+                if not player_turn:
+                    if self.betting_round(info):
+                        current_state += 1
+                    else:
+                        player_turn = True
+                active, bidder, cc = info
             elif current_state == 4:
+                current_bet = 0
                 if len(communal_cards) != 5:
                     play_deck.draw(1)
                     communal_cards.extend(play_deck.draw(1))
-                if active > 2:
-                    bidder = (self._dealer_position + 3) % len(self._players)
-                else:
-                    bidder = self._dealer_position
-                cc = 0
-                if self.betting_round(active, bidder, cc):
-                    current_state += 1
+                    if active > 2:
+                        bidder = (self._dealer_position + 3) % len(self._players)
+                    else:
+                        bidder = self._dealer_position
+                    cc = 0
+                info = [active, bidder, cc]
+                if not player_turn:
+                    if self.betting_round(info):
+                        current_state = 1
+                    else:
+                        player_turn = True
+                active, bidder, cc = info
             elif current_state == 5:
                 current_state = 0
-            if active
+            if active == 1:
+                for p in self._players:
+                    if not p.folded:
+                        p.chips += betting_pool
+            print(bidder)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
@@ -297,6 +347,12 @@ class GameManager:
                         self.running = False
                     elif event.key == pygame.K_SPACE:
                         current_state = (current_state + 1) % 6
+                    elif event.key == pygame.K_c:
+                        self._players[0].bet(0)
+                        cc += 1
+                        bidder += 1
+                        print(bidder)
+                        player_turn = False
             self.screen.fill(GameManager.colors["bg"])
             pygame.draw.rect(self.screen, (255, 255, 255),
                              pygame.Rect(1000, 600, 200, 280))

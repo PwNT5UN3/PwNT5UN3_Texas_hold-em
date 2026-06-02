@@ -32,8 +32,9 @@ class Player:
         return amount
 
     def bot_action(self, communal_cards: list[Card],
-                   table_bet: int) -> (str, int):
-        return ("F", 0)
+                   table_bet: int) -> str:
+        self.folded = True
+        return "F"
 
     @property
     def active(self) -> bool:
