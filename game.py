@@ -185,10 +185,12 @@ class GameManager:
                                        dealer_cards))
         self._dealer_position = (dealer_cards[0][0] + len(self._players) - 1)\
             % len(self._players)
-    
-    def betting_round(self, active: int) -> bool:
-        pass
 
+    def betting_round(self, active: int, bidder: int, cc: int) -> bool:
+        while cc < active:
+            if self._players[bidder].folded:
+                cc += 1
+            # elif self._players
 
 
     def play(self):
@@ -201,12 +203,12 @@ class GameManager:
         current_bet = 0
         current_big = 100
         hand_num = 4
-        call_counters = [0, 0, 0, 0]
         communal_cards = []
         bidder = -1
         active = len(self._players)
         while self.running:
             if current_state == 0:
+                active = len(self._players)
                 for p in self._players:
                     p.reset_for_hand()
                 play_deck = Deck()
@@ -241,24 +243,50 @@ class GameManager:
                         p.receive(play_deck.draw(1)[0])
                     play_deck.draw(1)
                 current_state += 1
-                call_counters = [0, 0, 0, 0]
             elif current_state == 1:
-                bidder = (self._dealer_position + 3) % len(self._players)
-                pass
+                if active > 2:
+                    bidder = (self._dealer_position + 3) % len(self._players)
+                else:
+                    bidder = self._dealer_position
+                cc = 0
+                if self.betting_round(active, bidder, cc):
+                    current_state += 1
             elif current_state == 2:
                 if len(communal_cards) != 3:
                     play_deck.draw(3)
                     communal_cards.extend(play_deck.draw(3))
+                if active > 2:
+                    bidder = (self._dealer_position + 3) % len(self._players)
+                else:
+                    bidder = self._dealer_position
+                cc = 0
+                if self.betting_round(active, bidder, cc):
+                    current_state += 1
             elif current_state == 3:
                 if len(communal_cards) != 4:
                     play_deck.draw(1)
                     communal_cards.extend(play_deck.draw(1))
+                if active > 2:
+                    bidder = (self._dealer_position + 3) % len(self._players)
+                else:
+                    bidder = self._dealer_position
+                cc = 0
+                if self.betting_round(active, bidder, cc):
+                    current_state += 1
             elif current_state == 4:
                 if len(communal_cards) != 5:
                     play_deck.draw(1)
                     communal_cards.extend(play_deck.draw(1))
+                if active > 2:
+                    bidder = (self._dealer_position + 3) % len(self._players)
+                else:
+                    bidder = self._dealer_position
+                cc = 0
+                if self.betting_round(active, bidder, cc):
+                    current_state += 1
             elif current_state == 5:
                 current_state = 0
+            if active
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
