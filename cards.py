@@ -16,10 +16,10 @@ class Suit(IntEnum):
     @property
     def symbol(self) -> str:
         return {
-            Suit.CLUBS: "C",
-            Suit.DIAMONDS: "D",
-            Suit.HEARTS: "H",
-            Suit.SPADES: "S"
+            Suit.CLUBS: "♣",
+            Suit.DIAMONDS: "♦",
+            Suit.HEARTS: "♥",
+            Suit.SPADES: "♠"
         }[self]
 
 
@@ -49,7 +49,7 @@ class Rank(IntEnum):
             Rank.SEVEN: "7",
             Rank.EIGHT: "8",
             Rank.NINE: "9",
-            Rank.TEN: "T",
+            Rank.TEN: "10",
             Rank.JACK: "J",
             Rank.QUEEN: "Q",
             Rank.KING: "K",

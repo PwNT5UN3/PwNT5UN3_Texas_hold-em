@@ -20,7 +20,6 @@ class GameManager:
                           "total_number_of_players": 5}
         self._players = []
         self._side_pots = []
-        self._communal_cards = []
         self._dealer_position = -1
         pygame.init()
         self.x_len = 1600
@@ -184,10 +183,134 @@ class GameManager:
                                   key=lambda x: x[1], reverse=True)
             dealer_cards = list(filter(lambda x: x[1] == dealer_cards[0][1],
                                        dealer_cards))
-        self._dealer_position = dealer_cards[0][0]
+        self._dealer_position = (dealer_cards[0][0] + len(self._players) - 1)\
+            % len(self._players)
+    
+    def betting_round(self, active: int) -> bool:
+        pass
+
+
 
     def play(self):
         self.setup()
+        # states: "hand_setup", "preflop", "flop", "turn", "river", "showdown"
+        card_font = pygame.font.Font('CourierPrime-Regular.ttf', size=100)
+        suit_font = pygame.font.Font('Tinos-Italic.ttf', size=100)
+        current_state = 0
+        betting_pool = 0
+        current_bet = 0
+        current_big = 100
+        hand_num = 4
+        call_counters = [0, 0, 0, 0]
+        communal_cards = []
+        bidder = -1
+        active = len(self._players)
+        while self.running:
+            if current_state == 0:
+                for p in self._players:
+                    p.reset_for_hand()
+                play_deck = Deck()
+                communal_cards = []
+                self._dealer_position = (self._dealer_position + 1)\
+                    % len(self._players)
+                hand_num = (hand_num + 1) % 5
+                if hand_num == 0:
+                    current_bet *= 2
+                if active > 2:
+                    bet = self._players[(self._dealer_position + 1)
+                                        % len(self._players)]\
+                                            .bet(current_big / 2)
+                    betting_pool += bet
+                    current_bet = bet
+                    self._players[(self._dealer_position + 2)
+                                % len(self._players)].bet(current_big)
+                    betting_pool += bet
+                    current_bet = bet
+                else:
+                    bet = self._players[(self._dealer_position)
+                                        % len(self._players)]\
+                                            .bet(current_big / 2)
+                    betting_pool += bet
+                    current_bet = bet
+                    self._players[(self._dealer_position + 1)
+                                % len(self._players)].bet(current_big)
+                    betting_pool += bet
+                    current_bet = bet
+                for _ in range(2):
+                    for p in self._players:
+                        p.receive(play_deck.draw(1)[0])
+                    play_deck.draw(1)
+                current_state += 1
+                call_counters = [0, 0, 0, 0]
+            elif current_state == 1:
+                bidder = (self._dealer_position + 3) % len(self._players)
+                pass
+            elif current_state == 2:
+                if len(communal_cards) != 3:
+                    play_deck.draw(3)
+                    communal_cards.extend(play_deck.draw(3))
+            elif current_state == 3:
+                if len(communal_cards) != 4:
+                    play_deck.draw(1)
+                    communal_cards.extend(play_deck.draw(1))
+            elif current_state == 4:
+                if len(communal_cards) != 5:
+                    play_deck.draw(1)
+                    communal_cards.extend(play_deck.draw(1))
+            elif current_state == 5:
+                current_state = 0
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        self.running = False
+                    elif event.key == pygame.K_ESCAPE:
+                        self.running = False
+                    elif event.key == pygame.K_SPACE:
+                        current_state = (current_state + 1) % 6
+            self.screen.fill(GameManager.colors["bg"])
+            pygame.draw.rect(self.screen, (255, 255, 255),
+                             pygame.Rect(1000, 600, 200, 280))
+            pygame.draw.rect(self.screen, (255, 255, 255),
+                             pygame.Rect(1300, 600, 200, 280))
+            card_text = card_font.render(self._players[0].hole_cards[0]
+                                         .rank.label, True, (0, 0, 0))
+            self.screen.blit(card_text, (1020, 610))
+            card_text = suit_font.render(self._players[0].hole_cards[0]
+                                         .suit.symbol, True, (0, 0, 0)
+                                         if self._players[0].hole_cards[0]
+                                         .suit.value in [0, 3] 
+                                         else (155, 17, 30))
+            self.screen.blit(card_text, (1020, 670))
+            card_text = card_font.render(self._players[1].hole_cards[0]
+                                         .rank.label, True, (0, 0, 0))
+            self.screen.blit(card_text, (1320, 610))
+            card_text = suit_font.render(self._players[1].hole_cards[0]
+                                         .suit.symbol, True, (0, 0, 0)
+                                         if self._players[0].hole_cards[1]
+                                         .suit.value in [0, 3]
+                                         else (155, 17, 30))
+            self.screen.blit(card_text, (1320, 670))
+            for c in range(5):
+                pygame.draw.rect(self.screen, (255, 255, 255)
+                                 if len(communal_cards) > c else (75, 0, 130),
+                                 pygame.Rect(200 + (250 * c), 200, 200, 280))
+            for c in range(len(communal_cards)):
+                card_text = card_font.render(communal_cards[c].rank.label,
+                                             True, (0, 0, 0))
+                self.screen.blit(card_text, (220 + (250 * c), 210))
+                card_text = suit_font.render(communal_cards[c].suit.symbol,
+                                             True, (0, 0, 0)
+                                             if communal_cards[c]
+                                             .suit.value in [0, 3]
+                                             else (155, 17, 30))
+                self.screen.blit(card_text, (220 + (250 * c), 270))
+            pygame.display.flip()
+            pygame.event.pump()
+
+    def end_screen(self):
+        end_font = pygame.font.Font(None, size=200)
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -198,5 +321,7 @@ class GameManager:
                     elif event.key == pygame.K_ESCAPE:
                         self.running = False
             self.screen.fill(GameManager.colors["bg"])
+            txt = end_font.render("Thanks for playing!", True, (0, 0, 0))
+            self.screen.blit(txt, (150, 350))
             pygame.display.flip()
             pygame.event.pump()

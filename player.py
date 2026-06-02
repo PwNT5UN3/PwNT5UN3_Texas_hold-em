@@ -29,6 +29,11 @@ class Player:
             raise ValueError("cannot bet negative amounts!")
         self.chips -= amount
         self.current_bet += amount
+        return amount
+
+    def bot_action(self, communal_cards: list[Card],
+                   table_bet: int) -> (str, int):
+        return ("F", 0)
 
     @property
     def active(self) -> bool:
